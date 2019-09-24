@@ -1,42 +1,32 @@
-## Writing an app in node
+# Databox simple Automate app
 
-This app will write a message to the helloworld actuator, created in the node driver code ([home]/databox-data-tracker/driver/node/src).  It also listens on new actuations, and when it observes one, it sends it to the client over a websocket. To get started, first ensure that your are running the test environment (i.e. you have called [home]/databox-quickstart/testenv/start.sh) and that you are running the driver code.  Then do:
+A simple app designed to allow simple automation tasks, i.e. set
+simple triggers when data source values change to send values to
+other actuators. (A bit like if this then that, or a cut-down
+databox SDK.)
 
-```
-cd src
-npm install
-npm start
-```
+Written in node, based on the 
+[databox-quickstart node app](https://github.com/me-box/databox-quickstart/tree/master/node/app)
 
-This will start the test environment and start your code outside of databox for testing.
+Chris Greenhalgh, THe University of Nottingham, 2019.
 
-To do an end to end test you will also need to run the driver. In a separate terminal window run:
+Status: just created from quickstart
 
-```
-cd [to driver src path]
-npm install
-npm start
-```
+Todo: 
+- add initial sensor support (sensingkit light)
+- add initial ui
+- add initial actuator support (tplink plug)
+- add initial trigger support
 
-Then go to http://127.0.0.1:8090/ui/actuate.  You should see the following in the terminal logs:
+## limitations
 
-```
-[Creating TEST http server] 8090
-started listening to actuator
-seen data from the hello world actuator! { msg: '1538476623699:test actuation!' }
-successfully actuated!
-```
+- Like the quickstart sample, it only supports one live UI view
+  at a time (single websocket connection).
 
-and in the driver terminal:
-
-```
-[Actuation] data received  { timestamp: 1538476623730,
-  datasourceid: undefined,
-  key: '',
-  data: '{"msg":"1538476623699:test actuation!"}' }
-```
 
 ## Running on databox in dev mode
+
+from the quickstart...
 
 Databox supports starting a development version of your container with the source code mounted from you hosts filesystem. This is particularly usefully for complex apps that use multiple drivers, as they are hard to test externally. To do this we use the --devmount option of the databox command. The databoxDevSrcMnt variable at the top of the package.json holds the configuration json string for this.
 
@@ -65,6 +55,8 @@ If you make changes to the manifest this must be reuploaded and the app reinstal
 
 ## Running on databox in production mode
 
+from the quickstart...
+
 To get running on the databox, you will first need to create a docker container to run your code.  To do this, in the src directory type:
 
 ```
@@ -84,7 +76,9 @@ npm run upload-manifest     # Adds the databox manifest for this driver to datab
 In this mode if you make changes to the code you must run `npm run build-prod` and restart the driver using the restart icon in the top left of the ui.
 If you make changes to the manifest this must be reuploaded and the driver reinstalled.
 
-# Stopping and resetting databox
+## Stopping and resetting databox
+
+from the quickstart...
 
 To stop databox run:
 
@@ -97,12 +91,4 @@ To completely reset databox run:
 ```
 npm run wipe-databox
 ```
-
-# Export Destination
-
-When actuated the app also tries to post data to an external URL using
-the export service. The default URL is `https://postman-echo.com/post`.
-If you change the URL then make sure you change it in the manifest
-export-whitelist, upload the changed manifest and re-install the app,
-as well as changing the URL in the code (`main.js`).
 
