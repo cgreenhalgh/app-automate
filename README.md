@@ -60,7 +60,7 @@ from the quickstart...
 To get running on the databox, you will first need to create a docker container to run your code.  To do this, in the src directory type:
 
 ```
-npm run build-prod       # Builds a production image using the Dockerfile
+npm run build       # Builds a production image using the Dockerfile
 npm run start-databox   # Starts a local copy of databox and sets the password to databoxDev
 
 # wait for databox to start go to http://127.0.0.1 install the https certificate and then go to https://127.0.0.1

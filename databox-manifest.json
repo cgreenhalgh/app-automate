@@ -18,10 +18,17 @@
   },
   "datasources": [
     {
-      "type": "helloWorldActuator",
-      "required": true,
-      "name": "helloWorldActuator",
-      "clientid": "helloWorldActuator",
+      "type": "TP-SetPowerState",
+      "required": false,
+      "name": "smart plug control",
+      "clientid": "TPLINK_PLUG_SET",
+      "granularities": []
+    },
+    {
+      "type": "light",
+      "required": false,
+      "name": "sensingkit light",
+      "clientid": "LIGHT",
       "granularities": []
     }
   ],
