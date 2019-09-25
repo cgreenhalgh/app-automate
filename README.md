@@ -13,15 +13,30 @@ Chris Greenhalgh, THe University of Nottingham, 2019.
 Status: just created from quickstart
 
 Todo: 
-- add initial sensor support (sensingkit light)
-- add initial ui
-- add initial actuator support (tplink plug)
-- add initial trigger support
+- add scriptable actuation
+- add scriptable trigger support
+- persist configuration
+- avoid duplicate actuation requests (i.e. on every input value change)
+
+## UI design notes
+
+When installed the user can decide which particular datasources/actuators to link.
+
+Could show actuators and non-actuators - tables with values. 
+Maybe test set on actuators.
+Could select one of each as active/current.
+Or a function for each actuator that can use all inputs?
+
+state or events?
+
+other visual output??
+
 
 ## limitations
 
 - Like the quickstart sample, it only supports one live UI view
   at a time (single websocket connection).
+- 
 
 
 ## Running on databox in dev mode
