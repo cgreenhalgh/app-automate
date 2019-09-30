@@ -1,8 +1,6 @@
 {
   "manifest-version": 1,
   "name": "app-automate",
-  "docker-registry": "databoxsystems",
-  "docker-image-tag": "0.5.2",
   "databox-type": "app",
   "version": "0.1.0",
   "description": "simple automation app",
