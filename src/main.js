@@ -39,6 +39,12 @@ class DataSource {
               timestamp: data.timestamp
           }
           if (ws) {
+              let msg = { 
+                id: "DS:"+this.metadata.DataSourceID,
+                parentid: "dstable",
+                element: "tr",
+                html: "<td>"+this.metadata.DataSourceID+"</td><td>"+JSON.stringify(data.data)+"</td><td>"+data.timestamp+"</td>"
+              }
               let json = JSON.stringify(msg)
               try {
                 ws.send(json);

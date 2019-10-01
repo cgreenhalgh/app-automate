@@ -70,10 +70,22 @@
             }
 
             socket.onmessage = function (msg) {
-                const message = document.createElement("div");
-                message.innerHTML = msg.data;
-                document.getElementById("messages").append(message);
-                console.log("message", msg);
+                console.log("message, data: ", msg.data);
+                var data = JSON.parse(msg.data);
+                if (!!data.id) {
+                    var parent = document.getElementById(!!data.parentid ? data.parentid : "items");
+                    var item = document.getElementById(data.id);
+                    if ( !item ) {
+                        item = document.createElement(!!data.element ? data.element : "div");
+                        item.id = data.id;
+                        parent.append(item)
+                    }
+                    item.innerHTML = data.html;
+                } else {
+                    const message = document.createElement(!!data.element ? data.element : "div");
+                    message.innerHTML = data.html;
+                    document.getElementById(!!data.parentid ? data.parentid : "messages").prepend(message);
+                }
             }
         });
     </script>
@@ -89,9 +101,15 @@
 </head>
 
 <body>
-    <h2>Hello world app written in node</h2>
+    <h2>App Automate</h2>
     <button onclick="actuate()" href="#">click here to actuate</button>
     <div style="margin-top:20px">
+        <h3>Datasources</h3>
+        <table>
+            <thead><tr><th>ID</th><th>Value</th><th>Time</th></tr></thead>
+            <tbody id="dstable"></tbody>
+        </table>
+        <div id="items"></div>
         <div id="messages"></div>
     </div>
 </body>
