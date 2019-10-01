@@ -12,6 +12,34 @@ const PORT = DATABOX_TESTING ? 8090 : process.env.PORT || '8080';
 
 //server and websocket connection;
 let ws, server = null;
+// cached ui state
+// map of parent id -> map of id -> msg structure
+let uistate = {};
+
+function updateui(id, parentid, element, html) {
+  let msg = { 
+    id: id,
+    parentid: parentid,
+    element: element,
+    html: html
+    };
+  if (!parentid)
+    parentid = "items";
+  if (uistate[parentid] === undefined) {
+    uistate[parentid] = {}
+  }
+  if (!!id) {
+    uistate[parentid][id] = msg;
+  }
+  if (ws) {
+    let json = JSON.stringify(msg)
+    try {
+      ws.send(json);
+    } catch (err) {
+      console.log(`error sending ws message`, err)
+    }
+  }
+}
 
 class DataSource {
   constructor(
@@ -38,20 +66,9 @@ class DataSource {
               data: data.data, 
               timestamp: data.timestamp
           }
-          if (ws) {
-              let msg = { 
-                id: "DS:"+this.metadata.DataSourceID,
-                parentid: "dstable",
-                element: "tr",
-                html: "<td>"+this.metadata.DataSourceID+"</td><td>"+JSON.stringify(data.data)+"</td><td>"+data.timestamp+"</td>"
-              }
-              let json = JSON.stringify(msg)
-              try {
-                ws.send(json);
-              } catch (err) {
-                console.log(`error sending ws message`, err)
-              }
-          }
+          updateui("DS:"+this.metadata.DataSourceID, "dstable", "tr", 
+            "<td>"+this.metadata.DataSourceID+"</td><td>"+JSON.stringify(data.data)+"</td><td>"+data.timestamp+"</td>");
+
           // TODO custom behaviour...
           if (clientid == 'LIGHT') {
             let value = Number( data.data[1] )
@@ -168,6 +185,19 @@ const wss = new WebSocket.Server({ server, path: "/ui/ws" });
 
 wss.on("connection", (_ws) => {
     ws = _ws;
+    console.log("new ws connection -sending state");
+    // send cached state
+    for (var parentid in uistate) {
+      var p = uistate[parentid]
+      for (var id in p) {
+        var msg = p[id];
+        try {
+          ws.send(JSON.stringify(msg))
+        } catch (err) {
+          console.log(`error sending cached ws message`, err);
+        }
+      }
+    }
 });
 
 wss.on("error", (err) => {
