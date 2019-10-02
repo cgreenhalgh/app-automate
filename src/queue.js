@@ -85,7 +85,9 @@ module.exports.NewTimerQueue = function(name, capacity, initialvalue, intervalms
         for (let i=0; i<initialvalue; i++) {
                 fill()
 	}
-	setInterval(fill, intervalms);
+	if (intervalms) { 
+		setInterval(fill, intervalms);
+	}
 	return q;
 }
 

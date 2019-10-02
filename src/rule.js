@@ -9,35 +9,51 @@
 //
 // e.g.
 //
-//   timers: {
-//     Hz1: { 
-//       intervalms: 1000,
-//       initialvalue: 1
-//   },
-//
+// Timer: 
 // {
+//   name: "1Hz",
+//   intervalms: 1000,
+//   capacity: 1,
+//   initialvalue: 1
+// },
+//
+// Datasource:
+// {
+//   name: "DS:LIGHT",
+//   clientid: "LIGHT",
+//   capacity: 10,
+//   noldvalues: 3,
+//   actuator: false
+// }
+// 
+// Rule
+// {
+//   name: "rule name",
 //   qs: {
-//     timer: '1Hz',
-//     light: 'DS:LIGHT',
-//     plug: 'DS:DS:TPLINK_PLUG_SET'
+//     timer: "1Hz",
+//     light: "DS:LIGHT",
+//     plug: "DS:DS:TPLINK_PLUG_SET"
 //   },
 //   preconditions: [
-//    'timer.max > timer.current',
-//    'light.max > light.empty',
-//    'light.get(light.max).value[1] > 0',
-//    '(plug.max == plug.empty || plug.get(plug.max).value.data == \'on\''
+//    "timer.max > timer.current",
+//    "light.max > light.empty",
+//    "light.get(light.max).value[1] > 0",
+//    "(plug.max == plug.empty || plug.get(plug.max).value.data == 'on'"
 //   ],
 //   actions: [
 //     {
-//       actuator: 'TPLINK_PLUG_SET',
-//       value: '{data:\'off\'}'
+//       actuator: "TPLINK_PLUG_SET",
+//       value: "{data:'off'}"
 //     }
 //   ],
 //   updates: [
-//     'timer.current ++'
+//     "timer.current ++"
 //   ]
 // }
 const queue = require('./queue');
+const _eval = require('eval'); 
+
+let debug = false;
 
 function makeQueueMap(queues) {
 	let qs = {};
@@ -46,21 +62,60 @@ function makeQueueMap(queues) {
 	}
 	return qs;
 }
+function safeEval(ex, filename, context) {
+	let res = _eval('module.exports = '+ex, filename, context, false);
+	if (debug) { 
+		console.log(`eval: ${ex} -> ${JSON.stringify(res)}`)
+	}
+	return res;
+}
+function findQnames(ex, qs) {
+	var vpat = /([A-Za-z_][A-Za-z_0-9]*)/g;
+	var match;
+	let names = [];
+	while((match=vpat.exec(ex))) {
+		let name = match[1];
+		if (qs[name]!==undefined) {
+			names.push(name);
+		} else if (debug) {
+			console.log(`ignore unknown possible qname ${name}`);
+		}
+	}
+	return names;
+}
 
-class Rule1 {
-	constructor(name) {
-		this.name = name;
-		this.enabled = true;
-		this.priority = 0;
-		this.qnames = {};
-		this.qnames.timer = '1Hz';
-		this.qnames.light = 'DS:LIGHT';
-		this.qnames.plug = 'DS:TPLINK_PLUG_SET';
+class Rule {
+	constructor(options) {
+		let defaults = { 
+			name: 'unnamed',
+			enabled: true,
+			priority: 0,
+			qs: {},
+			preconditions: [],
+			actions: [],
+			updates: []
+		}
+		options = { ...defaults, ...options }
+		this.name = options.name;
+		this.enabled = options.enabled;
+		this.priority = options.priority;
+		this.qs = options.qs;
+		this.preconditions = options.preconditions
+		this.actions = options.actions;
+		this.updates = options.updates;
+		this.updateQnames = [];
+		for (let i=0; i<this.updates.length; i++) {
+			this.updateQnames = this.updateQnames.concat(findQnames(this.updates[i], this.qs));
+		}
+		if (debug) {
+			console.log(`updateQnames: ${this.updateQnames}`);
+		}
+		this.activated = 0;
 	}
 	makeQs(queueMap) {
 		let qs = {};
-		for (let n in this.qnames) {
-			let qn = this.qnames[n];
+		for (let n in this.qs) {
+			let qn = this.qs[n];
 			qs[n] = queueMap[qn];
 			if (!qs[n]) {
 				throw `Could not find queue ${qn} to use as ${n} in ${this.name}`;
@@ -69,64 +124,78 @@ class Rule1 {
 		return qs;
 	}
 	testPreconditions(qmap) {
-		// TODO script
 		let qs = this.makeQs(qmap);
-		return qs.timer.max > qs.timer.current &&
-                        qs.light.max > qs.light.empty &&
-                        qs.light.get(qs.light.max).value[1] > 0 &&
-                        (qs.plug.max == qs.plug.empty ||
-                                qs.plug.get(qs.plug.max).value.data == 'on');
-
-		/*
-		return qs['1Hz'].max > qs['1Hz'].current && 
-			qs['DS:LIGHT'].max > qs['DS:LIGHT'].empty &&
-			qs['DS:LIGHT'].get(qs['DS:LIGHT'].max).value[1] > 0 &&
-			(qs['DS:TPLINK_PLUG_SET'].max == qs['DS:TPLINK_PLUG_SET'].empty ||
-				qs['DS:TPLINK_PLUG_SET'].get(qs['DS:TPLINK_PLUG_SET'].max).value.data == 'on');
-		*/
+		for (let i=0; i<this.preconditions.length; i++) {
+			if (!safeEval(this.preconditions[i], `rule ${this.name} precondition ${i}`, qs)) {
+				return false;
+			}
+		}
+		return true;
 	}
 	action(actuators) {
-		console.log('Rule1 Action!');
-		let ds = actuators.find((ds) => ds.clientid == 'TPLINK_PLUG_SET');
-		if (ds) {
-			ds.actuate({data:'off'})
-		} else {
-			console.log(`${this.name} cannot find actuator TPLINK_PLUG_SET`);
+		this.activated++;
+		for (let i=0; i<this.actions.length; i++) {
+			let action = this.actions[i];
+			let ds = actuators.find((ds) => ds.clientid == action.actuator);
+			let value = safeEval(action.value, `rule ${this.name} action ${i} value`, {});
+			if (ds) {
+				ds.actuate(value)
+			} else {
+				console.log(`${this.name} cannot find actuator ${action.actuator}`);
+			}
 		}
 	}
 	update( qmap ) {
 		let qs = this.makeQs(qmap);
-		qs.timer.current ++;
-		qs.timer.callChanged();
+		for (let i=0; i<this.updates.length; i++) {
+			let update = this.updates[i];
+			safeEval(update, `rule ${this.name} update ${i}`, qs)
+			// changed queues
+			for (let i=0; i<this.updateQnames.length; i++) {
+				qs[this.updateQnames[i]].callChanged();
+			}
+		}
 	}
 }
 
 let rules = [];
-rules.push(new Rule1('Rule1'));
+
+module.exports.GetRules = function() {
+	return rules;
+}
+
+module.exports.AddRule = function(options) {
+	let r = new Rule(options);
+	rules.push(r);
+}
 
 module.exports.CheckRules = function (queues, actuators) {
 	let qs = makeQueueMap(queues);
-
-	// could fire?
-	let ready = [];
-	for (let r of rules) {
-		if (r.enabled) {
-			try {
-				if (r.testPreconditions( qs )) {
-					ready.push (r);
-				}
-			} catch (err) {
-				console.log(`Error testing preconditions on rule ${r.name} - disabling rule`, err);
-				r.enabled = false;
-			}
+	let enabled = []
+        for (let r of rules) {
+                if (r.enabled) {
+			enabled.push(r);
 		}
 	}
-	ready.sort((a,b) => a.priority - b.priority);
-	if (ready.length==0) {
-		console.log(`no rule ready`)
-		return;
+        enabled.sort((a,b) => a.priority - b.priority);
+	let fired = 0;
+	for (let r of enabled) {
+		if (checkRule(r, qs, actuators))
+			fired ++;
 	}
-	let r = ready[0];
+	return fired;
+}
+function checkRule(r, qs, actuators) {
+	// could fire?
+	try {
+		if (!r.testPreconditions( qs )) {
+			return false
+		}
+	} catch (err) {
+		console.log(`Error testing preconditions on rule ${r.name} - disabling rule`, err);
+		r.enabled = false;
+		return false
+	}
 	console.log(`fire rule ${r.name}`);
 	try {
 		r.action(actuators);
@@ -141,5 +210,6 @@ module.exports.CheckRules = function (queues, actuators) {
 		console.log(`Error doing update on rule ${r.name} - disabling rule`, err);
 		r.enabled = false;
 	}
+	return true;
 }
 

@@ -6,6 +6,19 @@ var databox = require("node-databox");
 var WebSocket = require("ws");
 var queue = require('./queue');
 var rule = require('./rule');
+var fs = require('fs');
+
+console.log(`read config.json`)
+let config = {
+	timers: [],
+	queues: [],
+	rules: []
+}
+try {
+	config = JSON.parse(fs.readFileSync(__dirname + '/config.json'))
+} catch (err) {
+	console.log(`Error reading config: ${err}`, err);
+}
 
 const DATABOX_ARBITER_ENDPOINT = process.env.DATABOX_ARBITER_ENDPOINT || 'tcp://127.0.0.1:4444';
 const DATABOX_ZMQ_ENDPOINT = process.env.DATABOX_ZMQ_ENDPOINT || "tcp://127.0.0.1:5555";
@@ -103,16 +116,24 @@ class DataSource {
   }
 }
 
-const DATA_SOURCES = ['TPLINK_PLUG_SET', 'LIGHT']
 let dataSources = []
 let queues = []
 let updateScheduled = false;
 
+function rulesUpdateui(rules) {
+	for (let rule of rules) {
+		updateui(rule.name, 'rules', 'tr',
+		"<td>"+rule.name+"</td><td>"+rule.enabled+"</td><td>"+rule.priority+"</td><td>"+rule.activated+"</td>");
+
+	}
+}
+
 function updateQueues() {
 	console.log('update queues...')
 	updateScheduled = false;
-	rule.CheckRules(queues, dataSources);
-	//TODO
+	let fired = rule.CheckRules(queues, dataSources);
+	if (fired)
+		rulesUpdateui(rule.GetRules())
 }
 function queueChanged(q) {
 	console.log(`queue ${q.name} changed`);
@@ -128,32 +149,41 @@ function queueChanged(q) {
 if (DATABOX_TESTING) {
     // TODO ? 
 } else {
-  for (let clientid of DATA_SOURCES) {
-    let hypercat = process.env['DATASOURCE_'+clientid]
-    if (hypercat) {
-      console.log(`Try source ${clientid}: ${hypercat}`)
-      try {
-        let ds = new DataSource( clientid, hypercat )
-        dataSources.push(ds)
-      } catch (err) {
-        console.log(`Error setting update datasource ${clientid}: ${err.message}`, err)
-      }
-	try {
-		// e.g. 10 values, 3 old
-		let q = queue.NewTSBlobQueue('DS:'+clientid, 10, hypercat, 3);
-		queues.push(q);
-		q.onChanged(queueChanged);
-	} catch (err) {
-		console.log(`Error setting up DS queue ${clientid}`, err);
+	for (let q of config.queues) {
+		let hypercat = process.env['DATASOURCE_'+q.clientid]
+		if (hypercat && !!q.actuator) {
+			console.log(`Try actuator ${q.clientid}: ${hypercat}`)
+			try {
+				let ds = new DataSource( q.clientid, hypercat )
+				dataSources.push(ds)
+			} catch (err) {
+				console.log(`Error setting up actuator ${q.clientid}: ${err.message}`, err)
+			}
+		}
+		if (hypercat) {
+			console.log(`create queue ${q.name} for ${q.clientid}`)
+			try {
+				let dsq = queue.NewTSBlobQueue(q.name, q.capacity, hypercat, q.noldvalues);
+				queues.push(dsq);
+				dsq.onChanged(queueChanged);
+			} catch (err) {
+				console.log(`Error setting up DS queue ${q.name} for ${q.clientid}`, err);
+			}
+		} else {
+			console.log(`Optional source ${q.clientid} not specified`)
+		}
 	}
-    } else {
-      console.log(`Optional source ${clientid} not specified`)
-    }
-  }
 }
-let t = queue.NewTimerQueue('1Hz', 1, 1, 1000);
-queues.push(t);
-t.onChanged(queueChanged);
+for (let timer of config.timers) {
+	console.log(`add timer ${timer.name}`)
+	let t = queue.NewTimerQueue(timer.name, timer.capacity, timer.initialvalue, timer.intervalms);
+	queues.push(t);
+	t.onChanged(queueChanged);
+}
+
+for (let r of config.rules) {
+	rule.AddRule(r);
+}
 
 //set up webserver to serve driver endpoints
 const app = express();

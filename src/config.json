@@ -1,0 +1,74 @@
+{
+	"timers": [
+	{
+		"name": "1Hz",
+		"capacity": 1,
+		"initialvalue": 1,
+		"intervalms": 1000
+	}
+	],
+	"queues": [
+	{
+		"name": "DS:LIGHT",
+		"clientid": "LIGHT",
+		"capacity": 10,
+		"noldvalues": 3
+	},
+	{
+		"name": "DS:TPLINK_PLUG_SET",
+		"clientid": "TPLINK_PLUG_SET",
+		"capacity": 10,
+		"noldvalues": 3,
+		"actuator": true
+        }
+	],
+	"rules": [
+	{
+ 		"name": "light on when not dark",
+		"qs": {
+			"timer": "1Hz",
+			"light": "DS:LIGHT",
+			"plug": "DS:TPLINK_PLUG_SET"
+		},
+		"preconditions": [
+			"timer.max > timer.current",
+			"light.max > light.empty",
+			"light.get(light.max).value[1] > 0",
+			"plug.max == plug.empty || plug.get(plug.max).value.data == 'off'"
+		],
+		"actions": [
+		{
+			"actuator": "TPLINK_PLUG_SET",
+			"value": "{data:'on'}"
+		}
+		],
+		"updates": [
+			"timer.current ++"
+		]
+	},
+	{
+                "name": "light off when dark",
+                "qs": {
+                        "timer": "1Hz",
+                        "light": "DS:LIGHT",
+                        "plug": "DS:TPLINK_PLUG_SET"
+                },
+                "preconditions": [
+                        "timer.max > timer.current",
+                        "light.max > light.empty",
+                        "light.get(light.max).value[1] < 1",
+                        "plug.max == plug.empty || plug.get(plug.max).value.data == 'on'"
+                ],
+                "actions": [
+                {
+                        "actuator": "TPLINK_PLUG_SET",
+                        "value": "{data:'off'}"
+                }
+                ],
+                "updates": [
+                        "timer.current ++"
+                ]
+	}
+	]
+}
+

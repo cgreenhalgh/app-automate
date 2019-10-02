@@ -15,8 +15,7 @@ ADD ./package.json package.json
 RUN npm install --production
 
 USER databox
-ADD src/main.js dist/main.js
-ADD src/views dist/views
+ADD src/. dist/
 
 LABEL databox.type="app"
 

@@ -102,18 +102,24 @@
 
 <body>
     <h2>App Automate</h2>
-    <button onclick="actuate()" href="#">click here to actuate</button>
+    <button onclick="actuate()" href="#">click here to force the light on</button>
     <div style="margin-top:20px">
-        <h3>Datasources</h3>
-        <table>
-            <thead><tr><th>ID</th><th>Value</th><th>Time</th></tr></thead>
-            <tbody id="dstable"></tbody>
-        </table>
         <h3>Queues</h3>
         <table>
 		<thead><tr><th>Name</th><th>Empty</th><th>Current</th><th>Max</th><th>Top Value</th><th>Time</th></tr></thead>
             <tbody id="queues"></tbody>
         </table>
+	<h3>Rules</h3>
+	 <table>
+                <thead><tr><th>Name</th><th>Enabled</th><th>Priority</th><th>Activated</th></thead>
+            <tbody id="rules"></tbody>
+        </table>
+        <h3>Actuators</h3>
+        <table>
+            <thead><tr><th>ID</th><th>Value</th><th>Time</th></tr></thead>
+            <tbody id="dstable"></tbody>
+        </table>
+
         <div id="items"></div>
         <div id="messages"></div>
     </div>
