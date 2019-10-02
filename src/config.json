@@ -73,7 +73,7 @@
                 },
 		{
 			"actuator": "MESSAGES",
-			"value": "{data:{title:'dark',content:'its dark, but it was '+light.get(light.max-1).value[1],topic:'darkness',priority:1}}"
+			"value": "{title:'dark',content:'its dark, but it was '+light.get(light.max-1).value[1],topic:'darkness',priority:1}"
 		}
                 ],
                 "updates": [
