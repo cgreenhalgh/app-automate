@@ -128,12 +128,19 @@ function rulesUpdateui(rules) {
 	}
 }
 
+var initialised = false;
+
 function updateQueues() {
 	console.log('update queues...')
 	updateScheduled = false;
-	let fired = rule.CheckRules(queues, dataSources);
-	if (fired)
-		rulesUpdateui(rule.GetRules())
+	if (initialised) {
+		let fired = rule.CheckRules(queues, dataSources);
+		if (fired)
+			rulesUpdateui(rule.GetRules())
+	} else {
+		updateScheduled = true;
+		setTimeout(updateQueues, 0);
+	}
 }
 function queueChanged(q) {
 	console.log(`queue ${q.name} changed`);
@@ -166,6 +173,7 @@ if (DATABOX_TESTING) {
 				let dsq = queue.NewTSBlobQueue(q.name, q.capacity, hypercat, q.noldvalues);
 				queues.push(dsq);
 				dsq.onChanged(queueChanged);
+				queueChanged(dsq);
 			} catch (err) {
 				console.log(`Error setting up DS queue ${q.name} for ${q.clientid}`, err);
 			}
@@ -184,6 +192,7 @@ for (let timer of config.timers) {
 for (let r of config.rules) {
 	rule.AddRule(r);
 }
+initialised = true;
 
 //set up webserver to serve driver endpoints
 const app = express();

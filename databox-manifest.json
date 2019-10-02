@@ -2,7 +2,7 @@
   "manifest-version": 1,
   "name": "app-automate",
   "databox-type": "app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "simple automation app",
   "author": "Chris Greenhalgh",
   "licence": "MIT",
@@ -27,6 +27,13 @@
       "required": false,
       "name": "sensingkit light",
       "clientid": "LIGHT",
+      "granularities": []
+    },
+    {
+      "type": "message-view:1",
+      "required": false,
+      "name": "Messages",
+      "clientid": "MESSAGES",
       "granularities": []
     }
   ],

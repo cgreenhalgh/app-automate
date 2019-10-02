@@ -132,12 +132,13 @@ class Rule {
 		}
 		return true;
 	}
-	action(actuators) {
+	action(actuators, qmap) {
+		let qs = this.makeQs(qmap);
 		this.activated++;
 		for (let i=0; i<this.actions.length; i++) {
 			let action = this.actions[i];
 			let ds = actuators.find((ds) => ds.clientid == action.actuator);
-			let value = safeEval(action.value, `rule ${this.name} action ${i} value`, {});
+			let value = safeEval(action.value, `rule ${this.name} action ${i} value`, qs);
 			if (ds) {
 				ds.actuate(value)
 			} else {
@@ -198,7 +199,7 @@ function checkRule(r, qs, actuators) {
 	}
 	console.log(`fire rule ${r.name}`);
 	try {
-		r.action(actuators);
+		r.action(actuators, qs);
 	} catch (err) {
 
 		console.log(`Error doing action on rule ${r.name} - disabling rule`, err);

@@ -20,7 +20,14 @@
 		"capacity": 10,
 		"noldvalues": 3,
 		"actuator": true
-        }
+        },
+	{
+		"name": "MESSAGES",
+		"clientid": "MESSAGES",
+		"capacity": 10,
+		"noldvalues": 3,
+		"actuator": true
+	}
 	],
 	"rules": [
 	{
@@ -63,7 +70,11 @@
                 {
                         "actuator": "TPLINK_PLUG_SET",
                         "value": "{data:'off'}"
-                }
+                },
+		{
+			"actuator": "MESSAGES",
+			"value": "{data:{title:'dark',content:'its dark, but it was '+light.get(light.max-1).value[1],topic:'darkness',priority:1}}"
+		}
                 ],
                 "updates": [
                         "timer.current ++"
