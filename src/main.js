@@ -4,6 +4,8 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var databox = require("node-databox");
 var WebSocket = require("ws");
+var queue = require('./queue');
+var rule = require('./rule');
 
 const DATABOX_ARBITER_ENDPOINT = process.env.DATABOX_ARBITER_ENDPOINT || 'tcp://127.0.0.1:4444';
 const DATABOX_ZMQ_ENDPOINT = process.env.DATABOX_ZMQ_ENDPOINT || "tcp://127.0.0.1:5555";
@@ -37,6 +39,8 @@ function updateui(id, parentid, element, html) {
       ws.send(json);
     } catch (err) {
       console.log(`error sending ws message`, err)
+      try { ws.close(); } catch (err) {}
+      ws = null;
     }
   }
 }
@@ -101,6 +105,25 @@ class DataSource {
 
 const DATA_SOURCES = ['TPLINK_PLUG_SET', 'LIGHT']
 let dataSources = []
+let queues = []
+let updateScheduled = false;
+
+function updateQueues() {
+	console.log('update queues...')
+	updateScheduled = false;
+	rule.CheckRules(queues, dataSources);
+	//TODO
+}
+function queueChanged(q) {
+	console.log(`queue ${q.name} changed`);
+	let value = q.max!=q.empty ? q.get(q.max) : null;
+	updateui(q.name, 'queues', 'tr',
+		`<td>${q.name}</td><td>${q.empty}</td><td>${q.current}</td><td>${q.max}</th><td>${value ? JSON.stringify(value.value) : ''}</td><td>${value ? value.time : ''}</td>`);
+	if (!updateScheduled) {
+		updateScheduled = true;
+		setTimeout(updateQueues, 0);
+	}
+}
 
 if (DATABOX_TESTING) {
     // TODO ? 
@@ -115,12 +138,22 @@ if (DATABOX_TESTING) {
       } catch (err) {
         console.log(`Error setting update datasource ${clientid}: ${err.message}`, err)
       }
+	try {
+		// e.g. 10 values, 3 old
+		let q = queue.NewTSBlobQueue('DS:'+clientid, 10, hypercat, 3);
+		queues.push(q);
+		q.onChanged(queueChanged);
+	} catch (err) {
+		console.log(`Error setting up DS queue ${clientid}`, err);
+	}
     } else {
       console.log(`Optional source ${clientid} not specified`)
     }
   }
 }
-
+let t = queue.NewTimerQueue('1Hz', 1, 1, 1000);
+queues.push(t);
+t.onChanged(queueChanged);
 
 //set up webserver to serve driver endpoints
 const app = express();
@@ -184,7 +217,18 @@ if (DATABOX_TESTING) {
 const wss = new WebSocket.Server({ server, path: "/ui/ws" });
 
 wss.on("connection", (_ws) => {
+	if (ws) {
+		try { ws.close(); } catch (err) {}
+		ws = null;
+	}	   
     ws = _ws;
+	_ws.on('error', (err) => {
+		console.log(`ws error: ${err}`);
+		if (ws === _ws) {
+			try { _ws.close(); } catch (err) {}
+			ws = null;
+		}
+	});
     console.log("new ws connection -sending state");
     // send cached state
     for (var parentid in uistate) {
