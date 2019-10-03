@@ -49,6 +49,41 @@
             };
             xhr.send();
         }
+	function setEnabled(name, enable) {
+		var xhr = new XMLHttpRequest();
+		var url = `${baseHTTPProtocol()}://${baseURL()}/ui/${enable ? 'enable' : 'disable'}/${name}`;
+		console.log(`calling ${url}`);
+		xhr.open('POST', url);
+		xhr.onload = function () {
+			if (xhr.status === 200) {
+				console.log(xhr.responseText);
+			}
+			else {
+				console.log(xhr.status);
+			}
+		};
+		xhr.send();
+	}
+	function addrule() {
+		let rel = document.getElementById('addrule');
+		document.getElementById('addrulefeedback').innerHTML = "Sending rule...";
+		let body = rel.value;
+		var xhr = new XMLHttpRequest();
+		var url = `${baseHTTPProtocol()}://${baseURL()}/ui/addrule`;
+		console.log(`calling ${url}`, body);
+		xhr.open('POST', url);
+		xhr.onload = function () {
+			if (xhr.status === 200) {
+				document.getElementById('addrulefeedback').innerHTML = "Rule added";
+				console.log(xhr.responseText);
+			}
+			else {
+				document.getElementById('addrulefeedback').innerHTML = "Problem adding rule: "+xhr.status+", "+xhr.responseText;
+				console.log(xhr.status);
+			}
+		};
+		xhr.send(body);
+	}
 
         window.addEventListener('load', function () {
             console.log("creating websocket", `${baseWSProtocol()}://${baseURL()}/ui/ws`)
@@ -111,9 +146,32 @@
         </table>
 	<h3>Rules</h3>
 	 <table>
-                <thead><tr><th>Name</th><th>Enabled</th><th>Priority</th><th>Activated</th></thead>
+                <thead><tr><th>Name</th><th>Enabled</th><th>Priority</th><th>Activated</th><th>Error</th></thead>
             <tbody id="rules"></tbody>
         </table>
+        <div>
+        	Add rule:<br>
+        	<textarea id="addrule" cols="80" rows="15">{
+	"name": "newrule",
+	"qs": {
+		"timer": "1Hz"
+	},
+	"preconditions": [
+		"timer.max > timer.current"
+	],
+	"actions": [
+	{
+		"actuator": "",
+		"value": ""
+	}
+	],
+	"updates": [
+		"timer.current ++"
+	]
+}</textarea><br>
+        	<button onclick="addrule()">Add rule</button>
+        	<div id="addrulefeedback"></div>
+        </form>
         <h3>Actuators</h3>
         <table>
             <thead><tr><th>ID</th><th>Value</th><th>Time</th></tr></thead>

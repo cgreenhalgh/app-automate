@@ -111,6 +111,7 @@ class Rule {
 			console.log(`updateQnames: ${this.updateQnames}`);
 		}
 		this.activated = 0;
+		this.error = null;
 	}
 	makeQs(queueMap) {
 		let qs = {};
@@ -166,10 +167,32 @@ module.exports.GetRules = function() {
 }
 
 module.exports.AddRule = function(options) {
-	let r = new Rule(options);
+	if (!options.name)
+		otions.name = 'Anonymous rule '+(rules.length+1);
+	let r = getRule(options.name);
+	if (r) {
+		throw `Rule ${options.name} already exists`;
+	}
+	r = new Rule(options);
 	rules.push(r);
 }
-
+function getRule(name) {
+	return rules.find((r) => r.name == name)
+}
+module.exports.EnableRule = function(name) {
+	let r = getRule(name)
+	if (!r)
+		return false;
+	r.enabled = true;
+	return true;
+}
+module.exports.DisableRule = function(name) {
+	let r = getRule(name)
+	if (!r)
+		return false;
+	r.enabled = false;
+	return true;
+}
 module.exports.CheckRules = function (queues, actuators) {
 	let qs = makeQueueMap(queues);
 	let enabled = []
@@ -195,6 +218,7 @@ function checkRule(r, qs, actuators) {
 	} catch (err) {
 		console.log(`Error testing preconditions on rule ${r.name} - disabling rule`, err);
 		r.enabled = false;
+		r.error = `in preconditions, ${err}`;
 		return false
 	}
 	console.log(`fire rule ${r.name}`);
@@ -203,12 +227,14 @@ function checkRule(r, qs, actuators) {
 	} catch (err) {
 
 		console.log(`Error doing action on rule ${r.name} - disabling rule`, err);
+		r.error = `in actions, ${err}`;
 		r.enabled = false;
 	}
 	try {
 		r.update(qs);
 	} catch (err) {
 		console.log(`Error doing update on rule ${r.name} - disabling rule`, err);
+		r.error = `in updates, ${err}`;
 		r.enabled = false;
 	}
 	return true;

@@ -123,7 +123,9 @@ let updateScheduled = false;
 function rulesUpdateui(rules) {
 	for (let rule of rules) {
 		updateui(rule.name, 'rules', 'tr',
-		"<td>"+rule.name+"</td><td>"+rule.enabled+"</td><td>"+rule.priority+"</td><td>"+rule.activated+"</td>");
+		"<td>"+rule.name+"</td><td>"+rule.enabled+" <button onclick=\"setEnabled('"+encodeURIComponent(rule.name)+"',"+(!rule.enabled)+")\">"+
+		(rule.enabled ? 'disable' : 'enable')+"</button></td><td>"+rule.priority+"</td><td>"+rule.activated+"</td>"+
+		"<td>"+(rule.error ? rule.error: '')+"</td>");
 
 	}
 }
@@ -135,11 +137,12 @@ function updateQueues() {
 	updateScheduled = false;
 	if (initialised) {
 		let fired = rule.CheckRules(queues, dataSources);
-		if (fired)
+		if (fired) {
 			rulesUpdateui(rule.GetRules())
+			// scheduleUpdate??
+		}
 	} else {
-		updateScheduled = true;
-		setTimeout(updateQueues, 0);
+		scheduleUpdate();
 	}
 }
 function queueChanged(q) {
@@ -147,10 +150,13 @@ function queueChanged(q) {
 	let value = q.max!=q.empty ? q.get(q.max) : null;
 	updateui(q.name, 'queues', 'tr',
 		`<td>${q.name}</td><td>${q.empty}</td><td>${q.current}</td><td>${q.max}</th><td>${value ? JSON.stringify(value.value) : ''}</td><td>${value ? value.time : ''}</td>`);
+	scheduleUpdate();
+}
+function scheduleUpdate() {
 	if (!updateScheduled) {
 		updateScheduled = true;
 		setTimeout(updateQueues, 0);
-	}
+	}	
 }
 
 if (DATABOX_TESTING) {
@@ -192,12 +198,14 @@ for (let timer of config.timers) {
 for (let r of config.rules) {
 	rule.AddRule(r);
 }
+rulesUpdateui(rule.GetRules())
 initialised = true;
 
 //set up webserver to serve driver endpoints
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(bodyParser.text());
 app.set('views', __dirname+'/views');
 app.set('view engine', 'ejs');
 
@@ -234,7 +242,48 @@ let handleUiActuate = async function(req, res) {
 app.get('/ui/actuate', (req, res) => {
   handleUiActuate( req, res )
 });
-
+app.post('/ui/disable/:name', (req, res) => {
+	let name = req.params.name;
+	if (rule.DisableRule(name)) {
+		console.log(`disable rule ${name}`)
+		rulesUpdateui(rule.GetRules());
+		res.send({success:true});
+	} else {
+		console.log(`Error, cannot disable rule ${name} - not found`)
+		res.status(404).send({success:false});
+	}
+});
+app.post('/ui/enable/:name', (req, res) => {
+	let name = req.params.name;
+	if (rule.EnableRule(name)) {
+		console.log(`enable rule ${name}`)
+		rulesUpdateui(rule.GetRules());
+		res.send({success:true});
+		scheduleUpdate();
+	} else {
+		console.log(`Error, cannot enable rule ${name} - not found`)
+		res.status(404).send({success:false});
+	}
+});
+app.post('/ui/addrule', (req, res) => {
+	var json
+	try {
+		json = JSON.parse(req.body)
+	} catch (err) {
+		console.log(`Error in json of rule: ${err}`, req.body)
+		return res.status(400).send("Json error: "+err);
+	}
+	try {
+		rule.AddRule(json);
+	} catch (err) {
+		console.log(`Error adding rule: ${err}`, json)
+		return res.status(400).send("Error adding rule: "+err);
+	}
+	console.log(`added rule ${rule.name}`, rule)
+	rulesUpdateui(rule.GetRules());
+	scheduleUpdate();
+	res.send(`Added rule ${rule.name}`);
+})
 app.get("/status", function (req, res) {
     res.send("active");
 });
