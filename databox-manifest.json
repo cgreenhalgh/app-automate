@@ -2,7 +2,7 @@
   "manifest-version": 1,
   "name": "app-automate",
   "databox-type": "app",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "simple automation app",
   "author": "Chris Greenhalgh",
   "licence": "MIT",

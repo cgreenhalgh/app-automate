@@ -14,17 +14,12 @@ Status: just created from quickstart
 
 Todo: 
 - finance example (e.g. truelayer transaction -> message)
-- enable/disable rules from UI
-- add new rule from UI
-- rules for buttons, i.e. preconditions "arm" the button but the user 
-must press it for the action to take place
 - create own datasources and associated queues (needs store)
 - persist 'current' index across restarts
 - cron-style timers
 - ? persist timer states across restarts ?
 - other support for rate limiting (alt timers? alt queue disciplines?)
 - support KV and TS (rather than TSBlob) datasources
-- allow scripting from UI
 - persist configuration
 - better user metaphors
 - pretty UI
@@ -69,6 +64,9 @@ trues. Timers can be used as (sharable) rate limts.
 Note, in addition each rule can be `enabled` or disabled, and
 has a `priority` with respect to other rules that determines
 the order in which rules are checked.
+A rule call also be `manual`, meaning that the user must 
+explicitly activate ("fire") it while it's preconditions are met
+("armed").
 
 ### Operation
 
@@ -140,6 +138,9 @@ with 3 old values (if available).
 
 A `Rule` record is an object with fields:
 - `name` (string), used to refer to the Rule in the UI
+- `enabled` (boolean, default true), whether rule can be activated
+- `manual` (boolean, default false), whether user trigger is also required
+- `priority` (number, default 0), priority of execution
 - `qs`, a map of local Queue names to formal Queue names. Note, local queue 
 names should normally be valid Javascript property names for use in 
 preconditions, etc.
@@ -157,6 +158,7 @@ For example,
 ```
         {
                 "name": "light on when not dark",
+                "manual": false,
                 "qs": {
                         "timer": "1Hz",
                         "light": "DS:LIGHT",
@@ -194,6 +196,21 @@ When if fires is send the value `{data:'on'}` to the plug actuator.
 It also adds one to `timer.current`, effectively consuming the (only)
 available value from the timer. (This prevents this rule - and any others
 using the same Timer - from firing more than once per second.)`
+
+E.g.
+```
+{
+	"name": "on",
+	"manual": true,
+	"actions": [
+	{
+		"actuator": "TPLINK_PLUG_SET",
+		"value": "{data:'on'}"
+	}
+	]
+}
+```
+is an always available manual rule to set the TPLINK_PLUG_SET to on.
 
 ## limitations
 

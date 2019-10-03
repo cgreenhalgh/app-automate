@@ -123,8 +123,12 @@ let updateScheduled = false;
 function rulesUpdateui(rules) {
 	for (let rule of rules) {
 		updateui(rule.name, 'rules', 'tr',
-		"<td>"+rule.name+"</td><td>"+rule.enabled+" <button onclick=\"setEnabled('"+encodeURIComponent(rule.name)+"',"+(!rule.enabled)+")\">"+
-		(rule.enabled ? 'disable' : 'enable')+"</button></td><td>"+rule.priority+"</td><td>"+rule.activated+"</td>"+
+		"<td>"+rule.name+"</td><td>"+rule.priority+"</td>"+
+		"<td>"+rule.enabled+" <button onclick=\"setEnabled('"+encodeURIComponent(rule.name)+"',"+(!rule.enabled)+")\">"+
+		(rule.enabled ? 'disable' : 'enable')+"</button></td>"+
+		// armedId is just a number
+		"<td>"+(rule.manual ? "<button "+(rule.armed ? '' : 'disabled')+" onclick=\"fire('"+encodeURIComponent(rule.name)+"','"+rule.armedId+"')\">Fire</button>" : '')+"</td>"+
+		"<td>"+rule.activated+"</td>"+
 		"<td>"+(rule.error ? rule.error: '')+"</td>");
 
 	}
@@ -283,6 +287,17 @@ app.post('/ui/addrule', (req, res) => {
 	rulesUpdateui(rule.GetRules());
 	scheduleUpdate();
 	res.send(`Added rule ${rule.name}`);
+})
+app.post('/ui/fire/:name/:fireid', (req, res) => {
+	let name = req.params.name;
+	if (rule.FireRule(name, req.params.fireid)) {
+		console.log(`fire rule ${name}`)
+		res.send({success:true});
+		scheduleUpdate();
+	} else {
+		console.log(`Error, cannot fire rule ${name}`)
+		res.status(400).send({success:false});
+	}
 })
 app.get("/status", function (req, res) {
     res.send("active");

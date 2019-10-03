@@ -84,6 +84,21 @@
 		};
 		xhr.send(body);
 	}
+	function fire(name, fireid) {
+		var xhr = new XMLHttpRequest();
+		var url = `${baseHTTPProtocol()}://${baseURL()}/ui/fire/${name}/${fireid}`;
+		console.log(`calling ${url}`);
+		xhr.open('POST', url);
+		xhr.onload = function () {
+			if (xhr.status === 200) {
+				console.log(xhr.responseText);
+			}
+			else {
+				console.log(xhr.status);
+			}
+		};
+		xhr.send();
+	}
 
         window.addEventListener('load', function () {
             console.log("creating websocket", `${baseWSProtocol()}://${baseURL()}/ui/ws`)
@@ -146,13 +161,14 @@
         </table>
 	<h3>Rules</h3>
 	 <table>
-                <thead><tr><th>Name</th><th>Enabled</th><th>Priority</th><th>Activated</th><th>Error</th></thead>
+                <thead><tr><th>Name</th><th>Priority</th><th>Enabled</th><th>Fire</th><th>Activated</th><th>Error</th></thead>
             <tbody id="rules"></tbody>
         </table>
         <div>
         	Add rule:<br>
         	<textarea id="addrule" cols="80" rows="15">{
 	"name": "newrule",
+	"manual": false,
 	"qs": {
 		"timer": "1Hz"
 	},
@@ -161,8 +177,8 @@
 	],
 	"actions": [
 	{
-		"actuator": "",
-		"value": ""
+		"actuator": "MESSAGES",
+		"value": "{title:'Hello '+timer.current}"
 	}
 	],
 	"updates": [

@@ -30,6 +30,36 @@
 	}
 	],
 	"rules": [
+{
+	"name": "light on",
+	"manual": true,
+	"actions": [
+	{
+		"actuator": "TPLINK_PLUG_SET",
+		"value": "{data:'on'}"
+	}
+	]
+},
+{
+	"name": "light off",
+	"manual": true,
+	"actions": [
+	{
+		"actuator": "TPLINK_PLUG_SET",
+		"value": "{data:'off'}"
+	}
+	]
+},
+{
+	"name": "say hello",
+	"manual": true,
+	"actions": [
+	{
+		"actuator": "MESSAGES",
+		"value": "{title:'Hello', topic:'hello', content: 'this is just the app-automate \"say hello\" rule saying hello'}"
+	}
+	]
+},
 	{
  		"name": "light on when not dark",
 		"qs": {

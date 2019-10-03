@@ -90,6 +90,7 @@ class Rule {
 			name: 'unnamed',
 			enabled: true,
 			priority: 0,
+			manual: false,
 			qs: {},
 			preconditions: [],
 			actions: [],
@@ -99,6 +100,11 @@ class Rule {
 		this.name = options.name;
 		this.enabled = options.enabled;
 		this.priority = options.priority;
+		this.manual = options.manual;
+		this.armed = false;
+		this.wasarmed = false;
+		this.armedId = 0;
+		this.fireId = 0;
 		this.qs = options.qs;
 		this.preconditions = options.preconditions
 		this.actions = options.actions;
@@ -193,15 +199,28 @@ module.exports.DisableRule = function(name) {
 	r.enabled = false;
 	return true;
 }
+module.exports.FireRule = function(name, fireid) {
+	let r = getRule(name)
+	if (!r)
+		return false;
+	r.fireId = Number(fireid);
+	if (r.fireId != r.armedId) {
+		console.log(`Fire rule ${name} with invalid fire id ${fireid} (should be ${r.armedId})`)
+		return false;
+	}
+	return true;
+}
 module.exports.CheckRules = function (queues, actuators) {
 	let qs = makeQueueMap(queues);
 	let enabled = []
-        for (let r of rules) {
-                if (r.enabled) {
+	for (let r of rules) {
+		r.wasarmed = r.armed;
+		r.armed = false;
+		if (r.enabled) {
 			enabled.push(r);
 		}
 	}
-        enabled.sort((a,b) => a.priority - b.priority);
+	enabled.sort((a,b) => a.priority - b.priority);
 	let fired = 0;
 	for (let r of enabled) {
 		if (checkRule(r, qs, actuators))
@@ -213,13 +232,27 @@ function checkRule(r, qs, actuators) {
 	// could fire?
 	try {
 		if (!r.testPreconditions( qs )) {
-			return false
+			return r.wasarmed; // counts as a change
 		}
 	} catch (err) {
 		console.log(`Error testing preconditions on rule ${r.name} - disabling rule`, err);
 		r.enabled = false;
 		r.error = `in preconditions, ${err}`;
 		return false
+	}
+	if (r.manual) {
+		let justarmed = false;
+		r.armed = true;
+		if (!r.wasarmed) {
+			console.log(`arm rule ${r.name}`);
+			r.armedId++;
+			justarmed = true;
+		}
+		if (r.fireId != r.armedId) {
+			return justarmed; // counts as a change!
+		}
+		// avoid refiring from the same input
+		r.armedId++;
 	}
 	console.log(`fire rule ${r.name}`);
 	try {
