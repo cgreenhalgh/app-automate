@@ -2,7 +2,7 @@
   "manifest-version": 1,
   "name": "app-automate",
   "databox-type": "app",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "simple automation app",
   "author": "Chris Greenhalgh",
   "licence": "MIT",
@@ -35,7 +35,19 @@
       "name": "Messages",
       "clientid": "MESSAGES",
       "granularities": []
-    }
+    },
+    {
+		"type": "twitterHashTagStream",
+		"required": false,
+		"name": "Twitter",
+		"clientid": "TWITTER"
+	},
+	{
+		"type": "truelayerUserTransactions",
+		"required": false,
+		"name": "Transactions",
+		"clientid": "TRANSACTIONS"
+	}
   ],
   "network-permissions": [],
   "resource-requirements": {},

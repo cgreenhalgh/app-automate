@@ -9,24 +9,36 @@
 	],
 	"queues": [
 	{
-		"name": "DS:LIGHT",
+		"name": "LIGHT",
 		"clientid": "LIGHT",
 		"capacity": 10,
-		"noldvalues": 3
+		"noldvalues": 1
 	},
 	{
-		"name": "DS:TPLINK_PLUG_SET",
+		"name": "TPLINK_PLUG_SET",
 		"clientid": "TPLINK_PLUG_SET",
-		"capacity": 10,
-		"noldvalues": 3,
+		"capacity": 2,
+		"noldvalues": 1,
 		"actuator": true
         },
 	{
 		"name": "MESSAGES",
 		"clientid": "MESSAGES",
 		"capacity": 10,
-		"noldvalues": 3,
+		"noldvalues": 10,
 		"actuator": true
+	},
+	{
+		"name": "TWITTER",
+		"clientid": "TWITTER",
+		"capacity": 10,
+		"noldvalues": 10
+	},
+	{
+		"name": "TRANSACTIONS",
+		"clientid": "TRANSACTIONS",
+		"capacity": 10,
+		"noldvalues": 10
 	}
 	],
 	"rules": [
@@ -64,8 +76,8 @@
  		"name": "light on when not dark",
 		"qs": {
 			"timer": "1Hz",
-			"light": "DS:LIGHT",
-			"plug": "DS:TPLINK_PLUG_SET"
+			"light": "LIGHT",
+			"plug": "TPLINK_PLUG_SET"
 		},
 		"preconditions": [
 			"timer.max > timer.current",
@@ -87,8 +99,8 @@
                 "name": "light off when dark",
                 "qs": {
                         "timer": "1Hz",
-                        "light": "DS:LIGHT",
-                        "plug": "DS:TPLINK_PLUG_SET"
+                        "light": "LIGHT",
+                        "plug": "TPLINK_PLUG_SET"
                 },
                 "preconditions": [
                         "timer.max > timer.current",

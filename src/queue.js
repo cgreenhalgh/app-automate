@@ -116,13 +116,28 @@ module.exports.NewTSBlobQueue = function(name, capacity, hypercat, noldvalues) {
 		store.TSBlob.LastN( metadata.DataSourceID, noldvalues )
 		.then((values) => {
 			console.log(`queue ${name} got ${values.length}/${noldvalues} old values`);
-			for (let i=0; i<values.length; i++) {
+			// reverse order?!
+			for (let i=values.length-1; i>=0; i--) {
+				console.log(`timestamp ${values[i].timestamp}`, values[i].data)
 				q.add(values[i].data, values[i].timestamp);
 			}
 		})
 		.catch((err) => {
 			console.log(`Error queue ${name} getting ${noldvalues} from ${metadata.DataSourceID}: ${err}`, err);
 		})
+/*
+		// debug - lastN giving odd results
+		store.TSBlob.Latest( metadata.DataSourceID, )
+		.then((value) => {
+			if (value)
+				console.log(`queue ${name} latest timestamp ${value.timestamp}`, value.data)
+			else
+				console.log(`queue ${name} latest undefined`)
+		})
+		.catch((err) => {
+			console.log(`Error queue ${name} getting latest from ${metadata.DataSourceID}: ${err}`, err);
+		})
+*/
 	}
 	return q;
 }
