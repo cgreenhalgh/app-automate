@@ -13,9 +13,21 @@ Chris Greenhalgh, THe University of Nottingham, 2019.
 Status: just created from quickstart
 
 Todo: 
+- finance example (e.g. truelayer transaction -> message)
+- enable/disable rules from UI
+- add new rule from UI
+- rules for buttons, i.e. preconditions "arm" the button but the user 
+must press it for the action to take place
+- create own datasources and associated queues (needs store)
+- persist 'current' index across restarts
+- cron-style timers
+- ? persist timer states across restarts ?
+- other support for rate limiting (alt timers? alt queue disciplines?)
 - support KV and TS (rather than TSBlob) datasources
 - allow scripting from UI
 - persist configuration
+- better user metaphors
+- pretty UI
 
 ## Paradigm
 
