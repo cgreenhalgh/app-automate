@@ -66,7 +66,7 @@
 		"name": "Phone accelerometer",
 		"clientid": "ACCELEROMETER"
 	},
-	{	"type": "step counter",
+	{	"type": "step_counter",
 		"required": false,
 		"name": "Phone step counter",
 		"clientid": "STEP_COUNTER"
