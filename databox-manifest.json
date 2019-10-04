@@ -2,7 +2,7 @@
   "manifest-version": 1,
   "name": "app-automate",
   "databox-type": "app",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "simple automation app",
   "author": "Chris Greenhalgh",
   "licence": "MIT",
@@ -47,6 +47,29 @@
 		"required": false,
 		"name": "Transactions",
 		"clientid": "TRANSACTIONS"
+	},
+	{
+		"type": "button-view-pressed:1",
+		"required": false,
+		"name": "Button pressed",
+		"clientid": "BUTTON"
+	},
+	{
+		"type": "button-view-html:1",
+		"required": false,
+		"name": "Button appearance",
+		"clientid": "BUTTONHTML"
+	},
+	{
+		"type": "accelerometer",
+		"required": false,
+		"name": "Phone accelerometer",
+		"clientid": "ACCELEROMETER"
+	},
+	{	"type": "step counter",
+		"required": false,
+		"name": "Phone step counter",
+		"clientid": "STEP_COUNTER"
 	}
   ],
   "network-permissions": [],

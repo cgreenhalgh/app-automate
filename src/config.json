@@ -15,6 +15,18 @@
 		"noldvalues": 1
 	},
 	{
+		"name": "STEP_COUNTER",
+		"clientid": "STEP_COUNTER",
+		"capacity": 10,
+		"noldvalues": 1
+	},
+	{
+		"name": "ACCELEROMETER",
+		"clientid": "ACCELEROMETER",
+		"capacity": 100,
+		"noldvalues": 10
+	},
+	{
 		"name": "TPLINK_PLUG_SET",
 		"clientid": "TPLINK_PLUG_SET",
 		"capacity": 2,
@@ -26,6 +38,19 @@
 		"clientid": "MESSAGES",
 		"capacity": 10,
 		"noldvalues": 10,
+		"actuator": true
+	},
+	{
+		"name": "BUTTON",
+		"clientid": "BUTTON",
+		"capacity": 2,
+		"noldvalues": 2
+	},
+	{
+		"name": "BUTTONHTML",
+		"clientid": "BUTTONHTML",
+		"capacity": 2,
+		"noldvalues": 1,
 		"actuator": true
 	},
 	{
